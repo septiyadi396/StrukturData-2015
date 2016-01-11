@@ -72,62 +72,29 @@ public class ClientProcess implements Runnable {
         perintah = perintah.trim().toUpperCase();
 
         // Ambil parameter-nya
-        String[] parameter = perintah.split(" ");
+        String[] parameter = perintah.split(" +");
 
         // Tangani perintahnya
-        if (parameter[0].compareTo("ID") == 0 && parameter.length==2) {
-            DataUser dataUser = cekData(parameter[1]);
-            String pesan;
-
-            if(dataUser==null){
-                dataUser = new DataUser(parameter[1]);
-                data.add(dataUser);
-                pesan="User ID berhasil terdaftar";
-            }
-            else {
-                pesan="User ID yang sama telah terdaftar";
-            }
-
-            // Membalas status pendaftaran ID
-            keluaranWriter.write(pesan);
-            keluaranWriter.newLine();
-            keluaranWriter.flush();
-        }
-        else if (parameter[0].compareTo("LANGKAH") == 0 && parameter.length==4) {
-            DataUser dataUser = cekData(parameter[3]);
-            String pesan;
-
-            if(dataUser==null){
-                pesan="User ID belum terdaftar";
-            }
-            else {
-                int x=Integer.parseInt(parameter[1]);
-                int y=Integer.parseInt(parameter[2]);
-                dataUser.setData(x,y);
-                pesan="Langkah berhasil tersimpan";
-            }
-
-            keluaranWriter.write(pesan);
-            keluaranWriter.newLine();
-            keluaranWriter.flush();
-        }
-        else if (parameter[0].compareTo("STEP")== 0 && parameter.length<=4){
-            if(parameter[1].compareTo("total")==0){
-                DataUser dataUser = cekData(parameter[2]);
+        try{
+            if (parameter[0].compareTo("ID") == 0 && parameter.length==2) {
+                DataUser dataUser = cekData(parameter[1]);
                 String pesan;
 
                 if(dataUser==null){
-                    pesan="User ID belum terdaftar";
+                    dataUser = new DataUser(parameter[1]);
+                    data.add(dataUser);
+                    pesan="User ID berhasil terdaftar";
                 }
                 else {
-                    pesan="jumlah langkah adalah "+dataUser.getLangkah();
+                    pesan="User ID yang sama telah terdaftar";
                 }
 
+                // Membalas status pendaftaran ID
                 keluaranWriter.write(pesan);
                 keluaranWriter.newLine();
                 keluaranWriter.flush();
             }
-            else{
+            else if (parameter[0].compareTo("LANGKAH") == 0 && parameter.length==4) {
                 DataUser dataUser = cekData(parameter[3]);
                 String pesan;
 
@@ -135,25 +102,91 @@ public class ClientProcess implements Runnable {
                     pesan="User ID belum terdaftar";
                 }
                 else {
-                    pesan="jumlah langkah adalah "+dataUser.getLangkah(parameter[1],parameter[2]);
+                    String koordinat = ""+parameter[1]+" "+parameter[2];
+                    dataUser.setData(koordinat);
+                    pesan="Langkah berhasil tersimpan";
                 }
 
                 keluaranWriter.write(pesan);
                 keluaranWriter.newLine();
                 keluaranWriter.flush();
             }
-        }
-        else {
-            // Perintah tidak dikenal
-            keluaranWriter.write(PERINTAH_TIDAK_DIKENAL, 0, PERINTAH_TIDAK_DIKENAL.length());
+            else if (parameter[0].compareTo("STEP")== 0 && parameter.length<=4){
+                DataUser dataUser=null;
+                String pesan;
+
+                if(parameter[1].compareTo("TOTAL")==0){
+                    dataUser = cekData(parameter[2]);
+                    if(dataUser==null){
+                        pesan="User ID belum terdaftar";
+                    }
+                    else {
+                        pesan="jumlah langkah adalah "+dataUser.getLangkah();
+                    }
+                }
+                else{
+                    dataUser = cekData(parameter[3]);
+                    if(dataUser==null){
+                        pesan="User ID belum terdaftar";
+                    }
+                    else {
+                        int hasil = dataUser.getLangkah(parameter[1],parameter[2]);
+                        if(hasil>=0)
+                            pesan="Jumlah langkah adalah "+hasil;
+                        else
+                            pesan="Format waktu salah";
+                    }
+                }
+                keluaranWriter.write(pesan,0,pesan.length());
+                keluaranWriter.newLine();
+                keluaranWriter.flush();
+            }
+            else if (parameter[0].compareTo("RUTE")== 0 && parameter.length<=4){
+                DataUser dataUser=null;
+                String pesan;
+
+                if(parameter[1].compareTo("TOTAL")==0){
+                    dataUser = cekData(parameter[2]);
+                    if(dataUser==null){
+                        pesan="User ID belum terdaftar";
+                    }
+                    else {
+                        pesan="Rute yang dilewati "+dataUser.getRute();
+                    }
+                }
+                else{
+                    dataUser = cekData(parameter[3]);
+                    if(dataUser==null){
+                        pesan="User ID belum terdaftar";
+                    }
+                    else {
+                        String hasil = dataUser.getRute(parameter[1],parameter[2]);
+                        if(hasil!=null)
+                            pesan="Rute yang dilewati "+hasil;
+                        else
+                            pesan="Format waktu salah";
+                    }
+                }
+                keluaranWriter.write(pesan,0,pesan.length());
+                keluaranWriter.newLine();
+                keluaranWriter.flush();
+            }
+            else {
+                // Perintah tidak dikenal
+                keluaranWriter.write(PERINTAH_TIDAK_DIKENAL, 0, PERINTAH_TIDAK_DIKENAL.length());
+                keluaranWriter.newLine();
+                keluaranWriter.flush();
+            }
+
+            // Tampilkan perintahnya
+            System.out.println("Dari: " + ipStr);
+            System.out.println("perintah: " + perintah);
+            System.out.println();
+        }catch(Exception e){
+            keluaranWriter.write("Kesalahan Format");
             keluaranWriter.newLine();
             keluaranWriter.flush();
         }
-
-        // Tampilkan perintahnya
-        System.out.println("Dari: " + ipStr);
-        System.out.println("perintah: " + perintah);
-        System.out.println();
     }
 
     public DataUser cekData(String userID){

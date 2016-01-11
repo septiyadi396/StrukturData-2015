@@ -12,16 +12,18 @@ public class DataUser {
     private ArrayList<Object[]> dataUser;
 
     public DataUser(String idUser){
+        //simpan ID User
         this.idUser=idUser;
+        //buat arraylist untuk menampung data setiap melangkah
         dataUser=new ArrayList<Object[]>();
-        setData(0,0);
+        //atur koordinat dan waktu awal dimulai
+        setData("0 0");
     }
 
-    public void setData(int x,int y){
-        Object[] data= new Object[3];
-        data[0]=x;
-        data[1]=y;
-        data[2]=Calendar.getInstance().getTime();
+    public void setData(String koordinat){
+        Object[] data= new Object[2];
+        data[0]=koordinat;
+        data[1]=Calendar.getInstance().getTime();
         dataUser.add(data);
     }
 
@@ -29,96 +31,82 @@ public class DataUser {
         return idUser;
     }
 
+    public Date getDate(String[] waktu){
+        try{
+            Calendar result = Calendar.getInstance();
+            result.set( Calendar.HOUR_OF_DAY, Integer.parseInt(waktu[0]) );
+            result.set( Calendar.MINUTE, Integer.parseInt(waktu[1]) );
+            result.set( Calendar.SECOND, Integer.parseInt(waktu[2]) );
+            return result.getTime();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     public int getLangkah(String waktuAwal, String waktuAkhir){
         int hasil=0;
-        try {
-            Calendar temp,result;
-            Date awal,akhir,current;
-            
-            temp = Calendar.getInstance();
-            temp.setTime( new SimpleDateFormat("HH.mm.ss").parse(waktuAwal ));
+        String[] timeAwal=waktuAwal.split("\\.");
+        String[] timeAkhir=waktuAkhir.split("\\.");
+        Date awal,akhir,current;
 
-            result = Calendar.getInstance();
-            result.set( Calendar.HOUR_OF_DAY, temp.get( Calendar.HOUR_OF_DAY ) );
-            result.set( Calendar.MINUTE, temp.get( Calendar.MINUTE ) );
-            result.set( Calendar.SECOND, temp.get( Calendar.MINUTE ) );
-            awal=result.getTime();
-            
-            temp = Calendar.getInstance();
-            temp.setTime( new SimpleDateFormat("HH.mm.ss").parse(waktuAkhir ));
+        awal=getDate(timeAwal);
+        akhir=getDate(timeAkhir);
 
-            result = Calendar.getInstance();
-            result.set( Calendar.HOUR_OF_DAY, temp.get( Calendar.HOUR_OF_DAY ) );
-            result.set( Calendar.MINUTE, temp.get( Calendar.MINUTE ) );
-            result.set( Calendar.SECOND, temp.get( Calendar.MINUTE ) );
-            akhir=result.getTime();
-
-             for(int i=0; i<dataUser.size() ;i++){
-                current=(Date)((dataUser.get(i))[2]);
+        if(awal!=null&&akhir!=null){
+            for(int i=1; i<dataUser.size() ;i++){
+                current=(Date)((dataUser.get(i))[1]);
                 if(current.after(awal)&&current.before(akhir))
-                    hasil++;
+                    synchronized(this) {
+                        hasil++;
+                    }
                 else if(current.after(akhir))
                     break;
             }
-            return hasil-1;
-        } catch (ParseException e) {
-            return -1;
+            return hasil;
         }
+        else
+            return -1;
     }
 
     public int getLangkah(){
         int hasil=0;
-        try {
-            /*
-            Calendar temp,result;
-            Date awal,akhir,current;
-            
-            temp = Calendar.getInstance();
-            temp.setTime( new SimpleDateFormat("HH.mm.ss").parse(waktuAwal ));
-
-            result = Calendar.getInstance();
-            result.set( Calendar.HOUR_OF_DAY, temp.get( Calendar.HOUR_OF_DAY ) );
-            result.set( Calendar.MINUTE, temp.get( Calendar.MINUTE ) );
-            result.set( Calendar.SECOND, temp.get( Calendar.MINUTE ) );
-            awal=result.getTime();
-            
-            temp = Calendar.getInstance();
-            temp.setTime( new SimpleDateFormat("HH.mm.ss").parse(waktuAkhir ));
-
-            result = Calendar.getInstance();
-            result.set( Calendar.HOUR_OF_DAY, temp.get( Calendar.HOUR_OF_DAY ) );
-            result.set( Calendar.MINUTE, temp.get( Calendar.MINUTE ) );
-            result.set( Calendar.SECOND, temp.get( Calendar.MINUTE ) );
-            akhir=result.getTime();
-            */
-           
-             for(int i=0; i<dataUser.size() ;i++){
+        for(int i=0; i<dataUser.size() ;i++){
+            synchronized(this) {
                 hasil++;
             }
-            return hasil-1;
-        } catch (ParseException e) {
-            return -1;
         }
+        return hasil-1;
     }
-    
+
     public String getRute(String waktuAwal, String waktuAkhir){
-        try {
-            String hasil=null;
-            long awal,akhir,waktu;
+        String hasil="";
+        String[] timeAwal=waktuAwal.split("\\.");
+        String[] timeAkhir=waktuAkhir.split("\\.");
+        Date awal,akhir,current;
 
-            Calendar calendar = Calendar.getInstance();
-            SimpleDateFormat sdf = new SimpleDateFormat("HH.mm.ss", Locale.US);
-            calendar.setTime(sdf.parse(waktuAwal));
-            awal=calendar.getTimeInMillis();
-            calendar.setTime(sdf.parse(waktuAkhir));
-            akhir=calendar.getTimeInMillis();
-
-            for(int i=0; (waktu=(long)((dataUser.get(i))[2]))>=awal&&waktu<=akhir;i++){
-                hasil+="("+(int)((dataUser.get(i))[0])+","+(int)((dataUser.get(i))[1])+") ";
+        awal=getDate(timeAwal);
+        akhir=getDate(timeAkhir);
+        if(awal!=null&&akhir!=null){
+            for(int i=0; i<dataUser.size() ;i++){
+                current=(Date)((dataUser.get(i))[1]);
+                if(current.after(awal)&&current.before(akhir))
+                    hasil+="("+(String)((dataUser.get(i))[0])+") ";
+                else if(current.after(akhir))
+                    break;
             }
+            if(hasil.length()==0)
+                hasil=("Tidak ada");
             return hasil;
-        } catch (ParseException e) {
-            return null;
         }
+        else
+            return null;
+    }
+
+    public String getRute(){
+        String hasil="";
+        for(int i=0; i<dataUser.size() ;i++){
+            hasil+="("+(String)((dataUser.get(i))[0])+") ";
+        }
+        return hasil;
     }
 }

@@ -5,7 +5,7 @@ public class UtamaClient {
     public static void main(String[] args) {
         try {
             Scanner keyboard = new Scanner(System.in);
-            String ipStr = "127.0.0.1";
+            String ipStr = "192.168.92.50";
 
             // Buat client untuk berhubungan dengan server
             Client client = new Client(ipStr, 33333);
